@@ -72,24 +72,24 @@ class Install extends Command
         $this->closeProgressBlock();
 
         // Create users table
-        $this->progressBlock('Creating users table');
-        $this->executeArtisanProcess('migrate', $this->option('no-interaction') ? ['--no-interaction' => true] : []);
-        $this->closeProgressBlock();
+        // $this->progressBlock('Creating users table');
+        // $this->executeArtisanProcess('migrate', $this->option('no-interaction') ? ['--no-interaction' => true] : []);
+        // $this->closeProgressBlock();
 
         // Create CheckIfAdmin middleware
-        $this->progressBlock('Creating CheckIfAdmin middleware');
-        $this->executeArtisanProcess('backpack:publish-middleware');
-        $this->closeProgressBlock();
+        // $this->progressBlock('Creating CheckIfAdmin middleware');
+        // $this->executeArtisanProcess('backpack:publish-middleware');
+        // $this->closeProgressBlock();
 
         // Install Backpack Generators
-        $this->progressBlock('Installing Generators');
-        if (! file_exists('vendor/backpack/generators/composer.json')) {
-            // only do this if Generators aren't already required
-            $process = new Process(['composer', 'require', '--dev', 'backpack/generators']);
-            $process->setTimeout(300);
-            $process->run();
-        }
-        $this->closeProgressBlock();
+        // $this->progressBlock('Installing Generators');
+        // if (! file_exists('vendor/backpack/generators/composer.json')) {
+        //     // only do this if Generators aren't already required
+        //     $process = new Process(['composer', 'require', '--dev', 'backpack/generators']);
+        //     $process->setTimeout(300);
+        //     $process->run();
+        // }
+        // $this->closeProgressBlock();
 
         // Install Backpack Basset
         $this->progressBlock('Installing Basset');
@@ -102,7 +102,7 @@ class Install extends Command
             $this->installTheme();
 
             // Create users
-            $this->createUsers();
+            // $this->createUsers();
 
             // Addons
             $this->installAddons();
@@ -114,7 +114,7 @@ class Install extends Command
         }
 
         //execute basset checks
-        $this->call('basset:check');
+        // $this->call('basset:check');
         // Done
         $url = Str::of(config('app.url'))->finish('/')->append('admin/');
         $this->infoBlock('Backpack installation complete.', 'done');

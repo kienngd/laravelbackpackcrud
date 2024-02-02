@@ -55,11 +55,11 @@ class BackpackServiceProvider extends ServiceProvider
     {
         $this->loadTranslationsFrom(realpath(__DIR__.'/resources/lang'), 'backpack');
         $this->loadConfigs();
-        $this->registerMiddlewareGroup($this->app->router);
-        $this->setupRoutes($this->app->router);
-        $this->setupCustomRoutes($this->app->router);
+        // $this->registerMiddlewareGroup($this->app->router);
+        // $this->setupRoutes($this->app->router);
+        // $this->setupCustomRoutes($this->app->router);
         $this->publishFiles();
-        $this->sendUsageStats();
+        // $this->sendUsageStats();
 
         Basset::addViewPath(realpath(__DIR__.'/resources/views'));
     }
@@ -171,7 +171,7 @@ class BackpackServiceProvider extends ServiceProvider
         $this->publishes($backpack_views, 'views');
         $this->publishes($backpack_menu_contents_view, 'menu_contents');
         $this->publishes($backpack_public_assets, 'public');
-        $this->publishes($backpack_custom_routes_file, 'custom_routes');
+        // $this->publishes($backpack_custom_routes_file, 'custom_routes');
         $this->publishes($gravatar_assets, 'gravatar');
         $this->publishes($minimum, 'minimum');
     }
