@@ -2,7 +2,7 @@
 
 @include('crud::fields.inc.wrapper_start')
     @include('crud::fields.inc.translatable_icon')
-    <div class="checkbox">
+    <div class="checkbox-inline">
         <input type="hidden" name="{{ $field['name'] }}" value="{{ old(square_brackets_to_dots($field['name'])) ?? $field['value'] ?? $field['default'] ?? 0 }}">
     	  <input type="checkbox"
           data-init-function="bpFieldInitCheckbox"
@@ -17,8 +17,7 @@
         	  @endforeach
           @endif
           >
-    	<label class="form-check-label font-weight-normal">{!! $field['label'] !!}</label>
-
+    	<label class="checkbox ml-3">{!! $field['label'] !!}</label>
         {{-- HINT --}}
         @if (isset($field['hint']))
             <p class="help-block">{!! $field['hint'] !!}</p>

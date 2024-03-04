@@ -1,4 +1,11 @@
-@extends(backpack_view('layouts.top_left'))
+@php
+	if('user' != ($useLayout ?? 'admin') ) {
+		$useLayout = 'app_admin_nova';
+	} else {
+		$useLayout = 'app';
+	}
+@endphp
+@extends("user::User.layouts.$useLayout")
 
 @php
 	// Merge widgets that were fluently declared with widgets declared without the fluent syntax: 

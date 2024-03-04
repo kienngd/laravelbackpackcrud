@@ -1,5 +1,13 @@
 @extends(backpack_view('blank'))
 
+@section('before_styles')
+<style type="text/css">
+.dataTables_filter {
+  text-align: left !important;
+}
+</style>
+@endsection
+
 @php
   $defaultBreadcrumbs = [
     trans('backpack::crud.admin') => url(config('backpack.base.route_prefix'), 'dashboard'),
@@ -12,8 +20,8 @@
 @endphp
 
 @section('header')
-  <div class="container-fluid">
-    <h2>
+  <div class="container-fluid gutter-b">
+    <h2 class="font-normal">
       <span class="text-capitalize">{!! $crud->getHeading() ?? $crud->entity_name_plural !!}</span>
       <small id="datatable_info_stack">{!! $crud->getSubheading() ?? '' !!}</small>
     </h2>
@@ -26,19 +34,16 @@
 
     <!-- THE ACTUAL CONTENT -->
     <div class="{{ $crud->getListContentClass() }}">
-
         <div class="row mb-0">
           <div class="col-sm-6">
-            @if ( $crud->buttons()->where('stack', 'top')->count() ||  $crud->exportButtons())
-              <div class="d-print-none {{ $crud->hasAccess('create')?'with-border':'' }}">
-
-                @include('crud::inc.button_stack', ['stack' => 'top'])
-
-              </div>
-            @endif
+            <div id="datatable_search_stack" class="mt-sm-0 mt-2 d-print-none"></div>
           </div>
           <div class="col-sm-6">
-            <div id="datatable_search_stack" class="mt-sm-0 mt-2 d-print-none"></div>
+            @if ( $crud->buttons()->where('stack', 'top')->count() ||  $crud->exportButtons())
+              <div class="d-print-none {{ $crud->hasAccess('create')?'with-border':'' }} text-right">
+                @include('crud::inc.button_stack', ['stack' => 'top'])
+              </div>
+            @endif
           </div>
         </div>
 
@@ -47,7 +52,7 @@
           @include('crud::inc.filters_navbar')
         @endif
 
-        <table id="crudTable" class="bg-white table table-striped table-hover nowrap rounded shadow-xs border-xs mt-2" cellspacing="0">
+        <table id="crudTable" class="bg-white table table-striped table-hover table-bordered nowrap rounded shadow-xs border-xs mt-2" cellspacing="0">
             <thead>
               <tr>
                 {{-- Table columns --}}
@@ -137,6 +142,7 @@
 
 @section('after_styles')
   <!-- DATA TABLES -->
+  <link rel="stylesheet" href="{{asset('packages/backpack/base/css/noty.css')}}">
   <link rel="stylesheet" type="text/css" href="{{ asset('packages/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}">
   <link rel="stylesheet" type="text/css" href="{{ asset('packages/datatables.net-fixedheader-bs4/css/fixedHeader.bootstrap4.min.css') }}">
   <link rel="stylesheet" type="text/css" href="{{ asset('packages/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css') }}">

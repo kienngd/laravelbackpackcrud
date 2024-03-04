@@ -10,7 +10,7 @@
 			<div class="input-group">
 		        <input class="form-control pull-right"
 		        		id="text-filter-{{ $filter->key }}"
-		        		type="text"
+		        		type="{{ $filter->options['input_type'] ?? 'text' }}"
 						@if ($filter->currentValue)
 							value="{{ $filter->currentValue }}"
 						@endif

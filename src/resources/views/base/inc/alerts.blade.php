@@ -7,7 +7,7 @@
             Noty.overrideDefaults({
                 layout: 'topRight',
                 theme: 'backstrap',
-                timeout: 2500,
+                timeout: 10000,
                 closeWith: ['click', 'button'],
             });
 

@@ -1,8 +1,9 @@
  @php
     // as it is possible that we can be redirected with persistent table we save the alerts in a variable
     // and flush them from session, so we will get them later from localStorage.
+    
     $backpack_alerts = \Alert::getMessages();
-    \Alert::flush();
+    
  @endphp
 
   {{-- DATA TABLES SCRIPT --}}
@@ -241,6 +242,7 @@
                   "colvis": "{{ trans('backpack::crud.export.column_visibility') }}"
               },
           },
+          search: { return: true },
           processing: true,
           serverSide: true,
           searching: @json($crud->getOperationSetting('searchableTable') ?? true),

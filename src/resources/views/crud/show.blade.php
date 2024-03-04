@@ -1,5 +1,4 @@
 @extends(backpack_view('blank'))
-
 @php
   $defaultBreadcrumbs = [
     trans('backpack::crud.admin') => url(config('backpack.base.route_prefix'), 'dashboard'),
@@ -12,9 +11,9 @@
 @endphp
 
 @section('header')
-	<section class="container-fluid d-print-none">
+	<section class="container-fluid gutter-b d-print-none">
     	<a href="javascript: window.print();" class="btn float-right"><i class="la la-print"></i></a>
-		<h2>
+		<h2 class="font-normal">
 	        <span class="text-capitalize">{!! $crud->getHeading() ?? $crud->entity_name_plural !!}</span>
 	        <small>{!! $crud->getSubheading() ?? mb_ucfirst(trans('backpack::crud.preview')).' '.$crud->entity_name !!}.</small>
 	        @if ($crud->hasAccess('list'))
@@ -48,7 +47,7 @@
 			</div>
 	    @endif
 	    <div class="card no-padding no-border">
-			<table class="table table-striped mb-0">
+			<table class="table table-bordered ">
 		        <tbody>
 		        @foreach ($crud->columns() as $column)
 		            <tr>
@@ -75,7 +74,7 @@
 				@if ($crud->buttons()->where('stack', 'line')->count())
 					<tr>
 						<td><strong>{{ trans('backpack::crud.actions') }}</strong></td>
-						<td>
+						<td class="d-flex p-0">
 							@include('crud::inc.button_stack', ['stack' => 'line'])
 						</td>
 					</tr>

@@ -12,8 +12,8 @@
 @endphp
 
 @section('header')
-	<section class="container-fluid">
-	  <h2>
+	<section class="container-fluid gutter-b">
+	  <h2 class="font-normal">
         <span class="text-capitalize">{!! $crud->getHeading() ?? $crud->entity_name_plural !!}</span>
         <small>{!! $crud->getSubheading() ?? trans('backpack::crud.edit').' '.$crud->entity_name !!}.</small>
 
@@ -39,7 +39,6 @@
 		  		>
 		  {!! csrf_field() !!}
 		  {!! method_field('PUT') !!}
-
 		  	@if ($crud->model->translationEnabled())
 		    <div class="mb-2 text-right">
 		    	<!-- Single button -->

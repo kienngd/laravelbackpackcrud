@@ -1,4 +1,15 @@
 {{-- Example Backpack CRUD filter --}}
+@push('after_styles')
+<style>
+	.input-group {
+		flex-wrap: nowrap;
+		min-width: 20rem; 
+	}
+	.input-group > .form-control {
+		width: 100%;	
+	}
+</style>
+@endpush
 <li filter-name="{{ $filter->name }}"
     filter-type="{{ $filter->type }}"
     filter-key="{{ $filter->key }}"

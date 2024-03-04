@@ -12,8 +12,8 @@
 @endphp
 
 @section('header')
-<div class="container-fluid">
-    <h2>
+<div class="container-fluid gutter-b">
+    <h2 class="font-normal">
         <span class="text-capitalize">{!! $crud->getHeading() ?? $crud->entity_name_plural !!}</span>
         <small>{!! $crud->getSubheading() ?? trans('backpack::crud.reorder').' '.$crud->entity_name_plural !!}.</small>
 
