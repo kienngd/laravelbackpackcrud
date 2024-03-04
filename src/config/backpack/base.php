@@ -317,4 +317,5 @@ return [
     */
 
     'license_code' => env('BACKPACK_LICENSE', false),
+    'default_layout' => env('CRUD_DEFAULT_LAYOUT', 'app_admin_nova'),
 ];
