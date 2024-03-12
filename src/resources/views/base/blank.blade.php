@@ -1,10 +1,10 @@
 @php
-	$defaultLayout = config('base.default_layout', 'app_admin');
+	$defaultLayout = config('base.default_layout', 'app_admin_nova');
 	if(!isset($useLayout) || !\View::exists("user::User.layouts.$useLayout")) {
 		$useLayout = $defaultLayout;
 	}
 @endphp
-@extends("user::User.layouts.$useLayout");
+@extends("user::User.layouts.$useLayout")
 
 @php
 	// Merge widgets that were fluently declared with widgets declared without the fluent syntax: 

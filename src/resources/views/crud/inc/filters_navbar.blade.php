@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-filters mb-0 pb-0 pt-0">
+{{-- <nav class="navbar navbar-expand-lg navbar-filters mb-0 pb-0 pt-0">
       <!-- Brand and toggle get grouped for better mobile display -->
       <a class="nav-item d-none d-lg-block"><span class="la la-filter"></span></a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#bp-filters-navbar" aria-controls="bp-filters-navbar" aria-expanded="false" aria-label="{{ trans('backpack::crud.toggle_filters') }}">
@@ -15,7 +15,22 @@
           <li class="nav-item"><a href="#" id="remove_filters_button" class="nav-link {{ count(Request::input()) != 0 ? '' : 'invisible' }}"><i class="la la-eraser"></i> {{ trans('backpack::crud.remove_filters') }}</a></li>
         </ul>
       </div><!-- /.navbar-collapse -->
-  </nav>
+  </nav> --}}
+
+  <div class="btn-group pt-5 pb-5">
+    <a href="#" class="dropdown-toggle a btn btn-secondary"  type="button" aria-haspopup="true" aria-expanded="false"><i class="icon-sm fas fa-filter"></i></a>
+   <div class="collapse navbar-collapse dropdown-menu e" id="bp-filters-navbar">
+     <ul class="nav navbar-nav">
+       <!-- THE ACTUAL FILTERS -->
+       @foreach ($crud->filters() as $filter)
+         @include($filter->getViewWithNamespace())
+       @endforeach
+       <li class="nav-item"><a href="#" id="remove_filters_button" class="nav-link {{ count(Request::input()) != 0 ? '' : 'invisible' }}"><i class="la la-eraser"></i> {{ trans('backpack::crud.remove_filters') }}</a></li>
+     </ul>
+   </div><!-- /.navbar-collapse -->
+  </div>
+ 
+ 
 
 @push('crud_list_scripts')
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.18.2/URI.min.js" type="text/javascript"></script>
@@ -84,4 +99,20 @@
         });
       });
     </script>
+
+<script>
+  $(document).ready(function(){
+   $(".a").click(function(){
+     $(this).next(".e").toggleClass("show");
+   });
+
+   $(document).click(function(event){
+     var target = $(event.target);
+       if(!target.closest('.btn-group').length){
+         $(".e").removeClass("show");
+       }
+   });
+  });
+
+</script>
 @endpush
