@@ -127,11 +127,11 @@ class BackpackServiceProvider extends ServiceProvider
         $minimum = array_merge(
             // $backpack_views,
             // $backpack_lang_files,
-            $error_views,
+            // $error_views,
             $backpack_public_assets,
             $backpack_config_files,
             $backpack_menu_contents_view,
-            $backpack_custom_routes_file,
+            // $backpack_custom_routes_file,
             $gravatar_assets
         );
 
