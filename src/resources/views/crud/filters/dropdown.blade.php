@@ -3,7 +3,7 @@
     filter-type="{{ $filter->type }}"
     filter-key="{{ $filter->key }}"
 	class="nav-item dropdown {{ Request::get($filter->name)?'active':'' }}">
-    <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ $filter->label }} <span class="caret"></span></a>
+    <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown1" role="button" aria-haspopup="true" aria-expanded="false">{{ $filter->label }} <span class="caret"></span></a>
     <ul class="dropdown-menu">
 		<a class="dropdown-item" parameter="{{ $filter->name }}" dropdownkey="" href="">-</a>
 		<div role="separator" class="dropdown-divider"></div>
