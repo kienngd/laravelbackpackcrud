@@ -143,7 +143,7 @@ final class RegisterUploadEvents
     }
 
     /**
-     * Return the uploader for the object beeing configured.
+     * Return the uploader for the object being configured.
      * We will give priority to any uploader provided by `uploader => App\SomeUploaderClass` on upload definition.
      *
      * If none provided, we will use the Backpack defaults for the given object type.
@@ -175,6 +175,11 @@ final class RegisterUploadEvents
     private function setupUploadConfigsInCrudObject(UploaderInterface $uploader): void
     {
         $this->crudObject->upload(true)->disk($uploader->getDisk())->prefix($uploader->getPath());
+
+        if ($uploader->useTemporaryUrl()) {
+            $this->crudObject->temporary($uploader->useTemporaryUrl());
+            $this->crudObject->expiration($uploader->getExpirationTimeInMinutes());
+        }
     }
 
     private function getSubfieldModel(array $subfield, UploaderInterface $uploader)

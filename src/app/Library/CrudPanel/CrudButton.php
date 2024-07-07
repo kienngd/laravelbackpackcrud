@@ -16,7 +16,7 @@ use Illuminate\Support\Traits\Conditionable;
  * - CRUD::button('create')->stack('top')->view('crud::buttons.create');
  *
  * And if the developer uses CrudButton as Button in their CrudController:
- * - Button::name('create')->stack('top')->view('crud::butons.create');
+ * - Button::name('create')->stack('top')->view('crud::buttons.create');
  */
 class CrudButton implements Arrayable
 {
@@ -459,7 +459,7 @@ class CrudButton implements Arrayable
     }
 
     /**
-     * Dump and die. Duumps the current object to the screen,
+     * Dump and die. Dumps the current object to the screen,
      * so that the developer can see its contents, then stops
      * the execution.
      *

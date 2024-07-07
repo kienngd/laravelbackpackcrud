@@ -14,13 +14,17 @@ use Illuminate\Support\Facades\DB;
 trait HasRelationshipFields
 {
     /**
-     * Register aditional types in doctrine schema manager for the current connection.
+     * Register additional types in doctrine schema manager for the current connection.
      *
      * @return DB
      */
     public function getConnectionWithExtraTypeMappings()
     {
         $connection = DB::connection($this->getConnectionName());
+
+        if (! method_exists($connection, 'getDoctrineSchemaManager')) {
+            return $connection;
+        }
 
         $types = [
             'enum' => 'string',
