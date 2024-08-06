@@ -4,6 +4,8 @@ namespace Backpack\CRUD\app\Library\CrudPanel\Traits;
 
 use Backpack\CRUD\app\Exceptions\BackpackProRequiredException;
 use Exception;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 /**
  * Properties and methods used by the List operation.
@@ -21,10 +23,10 @@ trait Read
             return $this->entry->getKey();
         }
 
-        $params = \Route::current()->parameters();
+        $params = Route::current()?->parameters() ?? [];
 
         return  // use the entity name to get the current entry
-                // this makes sure the ID is corrent even for nested resources
+                // this makes sure the ID is current even for nested resources
                 $this->getRequest()->input($this->entity_name) ??
                 // otherwise use the next to last parameter
                 array_values($params)[count($params) - 1] ??
@@ -48,6 +50,17 @@ trait Read
         return $this->getEntry($id);
     }
 
+    public function getCurrentEntryWithLocale()
+    {
+        $entry = $this->getCurrentEntry();
+
+        if (! $entry) {
+            return false;
+        }
+
+        return $this->setLocaleOnModel($entry);
+    }
+
     /**
      * Find and retrieve an entry in the database or fail.
      *
@@ -57,11 +70,21 @@ trait Read
     public function getEntry($id)
     {
         if (! $this->entry) {
+            if ($this->getOperationSetting('eagerLoadRelationships')) {
+                $this->eagerLoadRelationshipFields();
+            }
             $this->entry = $this->getModelWithCrudPanelQuery()->findOrFail($id);
             $this->entry = $this->entry->withFakes();
         }
 
         return $this->entry;
+    }
+
+    private function shouldUseFallbackLocale(): bool|string
+    {
+        $fallbackRequestValue = $this->getRequest()->get('_fallback_locale');
+
+        return $fallbackRequestValue === 'true' ? true : (in_array($fallbackRequestValue, array_keys(config('backpack.crud.locales'))) ? $fallbackRequestValue : false);
     }
 
     /**
@@ -77,14 +100,7 @@ trait Read
             $this->entry = $this->getEntry($id);
         }
 
-        if ($this->entry->translationEnabled()) {
-            $locale = request('_locale', \App::getLocale());
-            if (in_array($locale, array_keys($this->entry->getAvailableLocales()))) {
-                $this->entry->setLocale($locale);
-            }
-        }
-
-        return $this->entry;
+        return $this->setLocaleOnModel($this->entry);
     }
 
     /**
@@ -114,25 +130,60 @@ trait Read
      */
     public function autoEagerLoadRelationshipColumns()
     {
-        $relationships = $this->getColumnsRelationships();
+        $this->with($this->getRelationshipsFromCrudObjects('columns'));
+    }
 
-        foreach ($relationships as $relation) {
-            if (strpos($relation, '.') !== false) {
-                $parts = explode('.', $relation);
-                $model = $this->model;
+    public function eagerLoadRelationshipFields()
+    {
+        $this->with($this->getRelationshipsFromCrudObjects('fields'));
+    }
 
-                // Iterate over each relation part to find the valid relations without attributes
-                // We should eager load the relation but not the attribute
-                foreach ($parts as $i => $part) {
-                    try {
-                        $model = $model->$part()->getRelated();
-                    } catch (Exception $e) {
-                        $relation = join('.', array_slice($parts, 0, $i));
-                    }
+    private function getRelationshipsFromCrudObjects(string $crudObjectType): array
+    {
+        $crudObjects = $this->{$crudObjectType}();
+
+        $relationStrings = [];
+
+        foreach ($crudObjects as $crudObjectName => $attributes) {
+            $relationString = isset($attributes['entity']) && $attributes['entity'] !== false ? $attributes['entity'] : '';
+
+            if (! $relationString) {
+                continue;
+            }
+
+            if (strpos($attributes['entity'], '.') === false) {
+                $relationStrings[] = $relationString;
+            }
+
+            $relationAttribute = $attributes['attribute'] ?? null;
+
+            if ($relationAttribute) {
+                $relationString = Str::endsWith($relationString, $relationAttribute) ? Str::beforeLast($relationString, '.') : $relationString;
+
+                $relationStrings[] = $relationString;
+
+                continue;
+            }
+
+            $parts = explode('.', $relationString);
+            $model = $this->model;
+
+            // Iterate over each relation part to find the valid relations without attributes
+            // We should eager load the relation but not the attribute
+            foreach ($parts as $i => $part) {
+                try {
+                    $model = $model->$part()->getRelated();
+                } catch (Exception $e) {
+                    $relationString = implode('.', array_slice($parts, 0, $i));
                 }
             }
-            $this->with($relation);
+
+            $relationStrings[] = $relationString;
+
+            continue;
         }
+
+        return array_unique($relationStrings);
     }
 
     /**
@@ -178,7 +229,7 @@ trait Read
     }
 
     /**
-     * Add two more columns at the beginning of the ListEntrie table:
+     * Add two more columns at the beginning of the ListEntries table:
      * - one shows the checkboxes needed for bulk actions
      * - one is blank, in order for evenual detailsRow or expand buttons
      * to be in a separate column.

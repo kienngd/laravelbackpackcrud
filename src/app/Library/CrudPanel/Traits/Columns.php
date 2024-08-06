@@ -116,9 +116,9 @@ trait Columns
     }
 
     /**
-     * Move this column to be first in the columns list.
+     * Move the most recently added column to the first column.
      *
-     * @return bool|null
+     * @return bool|void
      */
     public function makeFirstColumn()
     {
@@ -258,11 +258,7 @@ trait Columns
      */
     public function getColumnsRelationships()
     {
-        $columns = $this->columns();
-
-        return collect($columns)->pluck('entity')->reject(function ($value, $key) {
-            return ! $value;
-        })->toArray();
+        return $this->getRelationshipsFromCrudObjects('columns');
     }
 
     /**
@@ -290,6 +286,7 @@ trait Columns
 
     /**
      * Get a column by the id, from the associative array.
+     * The array is 0-indexed, so the first column has id 0.
      *
      * @param  int  $column_number  Placement inside the columns array.
      * @return array Column details.
@@ -309,7 +306,11 @@ trait Columns
      */
     public function getActionsColumnPriority()
     {
-        return (int) $this->getOperationSetting('actionsColumnPriority') ?? 1;
+        if ($this->getOperationSetting('actionsColumnPriority') === null) {
+            return 1;
+        }
+
+        return (int) $this->getOperationSetting('actionsColumnPriority');
     }
 
     /**
@@ -370,8 +371,8 @@ trait Columns
     {
         $column = $this->makeSureColumnHasName($column);
         $column = $this->makeSureColumnHasKey($column);
-        $column = $this->makeSureColumnHasLabel($column);
         $column = $this->makeSureColumnHasEntity($column);
+        $column = $this->makeSureColumnHasLabel($column);
         $column = $this->makeSureColumnHasModel($column);
         $column = $this->makeSureColumnHasAttribute($column);
         $column = $this->makeSureColumnHasRelationType($column);

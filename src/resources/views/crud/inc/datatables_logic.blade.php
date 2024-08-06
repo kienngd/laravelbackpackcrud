@@ -13,7 +13,7 @@
   @basset('https://cdn.datatables.net/fixedheader/3.3.1/js/dataTables.fixedHeader.min.js')
   @basset('https://cdn.datatables.net/fixedheader/3.3.1/css/fixedHeader.dataTables.min.css')
 
-  @basset(base_path('vendor/backpack/crud/src/resources/assets/img/spinner.svg'))
+  @basset(base_path('vendor/backpack/crud/src/resources/assets/img/spinner.svg'), false)
 
   <script>
     // here we will check if the cached dataTables paginator length is conformable with current paginator settings.
@@ -29,7 +29,7 @@
         localStorage.removeItem('DataTables_crudTable_/{{$crud->getRoute()}}');
     }
 
-    // in this page we allways pass the alerts to localStorage because we can be redirected with
+    // in this page we always pass the alerts to localStorage because we can be redirected with
     // persistent table, and this way we guarantee non-duplicate alerts.
     $oldAlerts = JSON.parse(localStorage.getItem('backpack_alerts'))
         ? JSON.parse(localStorage.getItem('backpack_alerts')) : {};
@@ -138,7 +138,9 @@
             newUrl = params_arr.length ? tmpUrl + "?" + params_arr.join("&") : tmpUrl;
         }
         window.history.pushState({}, '', newUrl);
-        localStorage.setItem('{{ Str::slug($crud->getRoute()) }}_list_url', newUrl);
+        @if ($crud->getPersistentTable())
+            localStorage.setItem('{{ Str::slug($crud->getRoute()) }}_list_url', newUrl);
+        @endif
       },
       dataTableConfiguration: {
         bInfo: {{ var_export($crud->getOperationSetting('showEntryCount') ?? true) }},

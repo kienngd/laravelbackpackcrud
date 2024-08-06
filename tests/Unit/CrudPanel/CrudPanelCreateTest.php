@@ -13,6 +13,7 @@ use Backpack\CRUD\Tests\config\Models\User;
 use Faker\Factory;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Create
@@ -21,6 +22,8 @@ use Illuminate\Support\Arr;
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Update
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Input
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\MorphRelationships
+ * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Fields
+ * @covers Backpack\CRUD\app\Library\CrudPanel\CrudField
  */
 class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCrudPanel
 {
@@ -132,7 +135,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
         ];
 
         $entry = $this->crudPanel->create($inputData);
@@ -152,7 +155,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'accountDetails' => [
                 'nickname' => $account_details_nickname,
                 'profile_picture' => 'test.jpg',
@@ -184,7 +187,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'accountDetails' => [
                 ['nickname' => $account_details_nickname, 'profile_picture' => 'test.jpg'],
             ],
@@ -251,7 +254,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'roles' => [1, 2],
         ];
@@ -336,7 +339,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'roles' => [1, 2],
             'accountDetails' => [
@@ -398,7 +401,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'bills' => [1],
         ];
@@ -434,7 +437,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'recommends' => [
                 [
@@ -467,6 +470,63 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $this->assertEquals('I changed the recommend and the pivot text', $entry->fresh()->recommends->first()->pivot->text);
     }
 
+    public function testMorphToManyCreatableRelationshipWithMultiple()
+    {
+        $inputData = $this->getPivotInputData(['recommendsDuplicate' => [
+            [
+                'recommendsDuplicate' => 1,
+                'text' => 'my pivot recommend field 1',
+            ],
+            [
+                'recommendsDuplicate' => 2,
+                'text' => 'my pivot recommend field 2',
+            ],
+            [
+                'recommendsDuplicate' => 1,
+                'text' => 'my pivot recommend field 1x1',
+            ],
+        ],
+        ], true, true);
+
+        $entry = $this->crudPanel->create($inputData);
+
+        $entry = $entry->fresh();
+
+        $this->assertCount(3, $entry->recommendsDuplicate);
+
+        $this->assertEquals(1, $entry->recommendsDuplicate[0]->id);
+        $this->assertEquals(1, $entry->recommendsDuplicate[2]->id);
+
+        $inputData['recommendsDuplicate'] = [
+            [
+                'recommendsDuplicate' => 1,
+                'text' => 'I changed the recommend and the pivot text',
+                'id' => 1,
+            ],
+            [
+                'recommendsDuplicate' => 2,
+                'text' => 'I changed the recommend and the pivot text 2',
+                'id' => 2,
+            ],
+            [
+                'recommendsDuplicate' => 3,
+                'text' => 'new recommend and the pivot text 3',
+                'id' => null,
+            ],
+        ];
+
+        $this->crudPanel->update($entry->id, $inputData);
+
+        $entry = $entry->fresh();
+
+        $this->assertCount(3, $entry->recommendsDuplicate);
+        $this->assertDatabaseCount('recommendables', 3);
+
+        $this->assertEquals('I changed the recommend and the pivot text', $entry->recommendsDuplicate[0]->pivot->text);
+        $this->assertEquals('I changed the recommend and the pivot text 2', $entry->recommendsDuplicate[1]->pivot->text);
+        $this->assertEquals('new recommend and the pivot text 3', $entry->recommendsDuplicate[2]->pivot->text);
+    }
+
     public function testBelongsToManyWithPivotDataRelationship()
     {
         $this->crudPanel->setModel(User::class);
@@ -492,7 +552,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'superArticles' => [
                 [
@@ -503,10 +563,163 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         ];
 
         $entry = $this->crudPanel->create($inputData);
-        $updateFields = $this->crudPanel->getUpdateFields($entry->id);
 
         $this->assertCount(1, $entry->fresh()->superArticles);
         $this->assertEquals('my first article note', $entry->fresh()->superArticles->first()->pivot->notes);
+    }
+
+    public function testBelongsToManyWithMultipleSameRelationIdAndPivotDataRelationship()
+    {
+        $inputData = $this->getPivotInputData(['superArticlesDuplicates' => [
+            [
+                'superArticlesDuplicates' => 1,
+                'notes' => 'my first article note',
+                'id' => null,
+            ],
+            [
+                'superArticlesDuplicates' => 1,
+                'notes' => 'my second article note',
+                'id' => null,
+            ],
+            [
+                'superArticlesDuplicates' => 2,
+                'notes' => 'my first article2 note',
+                'id' => null,
+            ],
+        ],
+        ], true, true);
+
+        $entry = $this->crudPanel->create($inputData);
+        $relationField = $this->crudPanel->getUpdateFields($entry->id)['superArticlesDuplicates'];
+
+        $this->assertCount(3, $relationField['value']);
+
+        $entry = $entry->fresh();
+
+        $this->assertCount(3, $entry->superArticlesDuplicates);
+        $this->assertEquals('my first article note', $entry->superArticles->first()->pivot->notes);
+        $this->assertEquals('my second article note', $entry->superArticles[1]->pivot->notes);
+        $this->assertEquals('my first article2 note', $entry->superArticles[2]->pivot->notes);
+
+        $inputData = $this->getPivotInputData(['superArticlesDuplicates' => [
+            [
+                'superArticlesDuplicates' => 1,
+                'notes' => 'my first article note updated',
+                'id' => 1,
+            ],
+            [
+                'superArticlesDuplicates' => 1,
+                'notes' => 'my second article note updated',
+                'id' => 2,
+            ],
+            [
+                'superArticlesDuplicates' => 2,
+                'notes' => 'my first article2 note updated',
+                'id' => 3,
+            ],
+        ],
+        ], false, true);
+
+        $entry = $this->crudPanel->update($entry->id, $inputData);
+        $relationField = $this->crudPanel->getUpdateFields($entry->id)['superArticlesDuplicates'];
+        $this->assertCount(3, $relationField['value']);
+
+        $entry = $entry->fresh();
+
+        $this->assertCount(3, $entry->superArticlesDuplicates);
+        $this->assertEquals('my first article note updated', $entry->superArticles[0]->pivot->notes);
+        $this->assertEquals('my second article note updated', $entry->superArticles[1]->pivot->notes);
+        $this->assertEquals('my first article2 note updated', $entry->superArticles[2]->pivot->notes);
+    }
+
+    public function testBelongsToManyAlwaysSaveSinglePivotWhenMultipleNotAllowed()
+    {
+        $inputData = $this->getPivotInputData(['superArticlesDuplicates' => [
+            [
+                'superArticlesDuplicates' => 1,
+                'notes' => 'my first article note',
+                'id' => null,
+            ],
+            [
+                'superArticlesDuplicates' => 1,
+                'notes' => 'my second article note',
+                'id' => null,
+            ],
+            [
+                'superArticlesDuplicates' => 2,
+                'notes' => 'my first article2 note',
+                'id' => null,
+            ],
+        ],
+        ]);
+
+        $entry = $this->crudPanel->create($inputData);
+        $relationField = $this->crudPanel->getUpdateFields($entry->id)['superArticlesDuplicates'];
+
+        $this->assertCount(2, $relationField['value']);
+
+        $entry = $entry->fresh();
+
+        $this->assertCount(2, $entry->superArticlesDuplicates);
+        $this->assertEquals('my second article note', $entry->superArticles[0]->pivot->notes);
+        $this->assertEquals('my first article2 note', $entry->superArticles[1]->pivot->notes);
+    }
+
+    public function testBelongsToManyDeletesPivotData()
+    {
+        $inputData = $this->getPivotInputData(['superArticlesDuplicates' => [
+            [
+                'superArticlesDuplicates' => 1,
+                'notes' => 'my first article note',
+                'id' => null,
+            ],
+            [
+                'superArticlesDuplicates' => 1,
+                'notes' => 'my second article note',
+                'id' => null,
+            ],
+            [
+                'superArticlesDuplicates' => 2,
+                'notes' => 'my first article2 note',
+                'id' => null,
+            ],
+        ],
+        ], true, true);
+
+        $entry = $this->crudPanel->create($inputData);
+        $relationField = $this->crudPanel->getUpdateFields($entry->id)['superArticlesDuplicates'];
+
+        $this->assertCount(3, $relationField['value']);
+
+        $inputData = $this->getPivotInputData(['superArticlesDuplicates' => [
+            [
+                'superArticlesDuplicates' => 1,
+                'notes' => 'new first article note',
+                'id' => null,
+            ],
+            [
+                'superArticlesDuplicates' => 1,
+                'notes' => 'my second article note updated',
+                'id' => 2,
+            ],
+            [
+                'superArticlesDuplicates' => 3,
+                'notes' => 'my first article2 note updated',
+                'id' => 3,
+            ],
+        ],
+        ], false, true);
+
+        $entry = $this->crudPanel->update($entry->id, $inputData);
+        $relationField = $this->crudPanel->getUpdateFields($entry->id)['superArticlesDuplicates'];
+        $this->assertCount(3, $relationField['value']);
+
+        $entry = $entry->fresh();
+
+        $this->assertCount(3, $entry->superArticlesDuplicates);
+        $this->assertEquals('new first article note', $entry->superArticles[2]->pivot->notes);
+        $this->assertEquals('my second article note updated', $entry->superArticles[0]->pivot->notes);
+        $this->assertEquals('my first article2 note updated', $entry->superArticles[1]->pivot->notes);
     }
 
     public function testCreateHasOneWithNestedRelationsRepeatableInterface()
@@ -560,7 +773,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'roles' => [1, 2],
             'accountDetails' => [
@@ -630,7 +843,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'bang_relation_field' => 1,
         ];
@@ -689,7 +902,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'roles' => [1, 2],
             'accountDetails' => [
@@ -734,7 +947,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'roles' => [1, 2],
             'accountDetails' => [
@@ -778,7 +991,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'comment' => [
                 'text' => 'some test comment text',
@@ -814,7 +1027,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'stars' => [
                 [
@@ -867,7 +1080,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'universes' => [
                 [
@@ -952,7 +1165,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'planets' => [1, 2],
         ];
@@ -987,7 +1200,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'planets' => [1, 2],
         ];
@@ -1052,7 +1265,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'incomes' => [
                 [
@@ -1141,7 +1354,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'planets' => [1, 2],
         ];
@@ -1175,7 +1388,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'planets' => [1, 2],
         ];
@@ -1208,7 +1421,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'comets' => [1, 2],
         ];
@@ -1242,7 +1455,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'planetsNonNullable' => [1, 2],
         ];
@@ -1282,7 +1495,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'universes' => [
                 [
@@ -1335,7 +1548,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'roles' => [1, 2],
             'accountDetails' => [
@@ -1383,7 +1596,7 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $inputData = [
             'name' => $faker->name,
             'email' => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'password' => Hash::make($faker->password()),
             'remember_token' => null,
             'superArticles' => [
                 [
@@ -1485,5 +1698,90 @@ class CrudPanelCreateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
                 ['user'],
             ],
         ]);
+    }
+
+    public function testItCanRegisterModelEventsInTheFields()
+    {
+        $this->crudPanel->setModel(User::class);
+
+        $this->crudPanel->addField([
+            'name' => 'name',
+            'events' => [
+                'created' => function ($entry) {
+                },
+                'creating' => function ($entry) {
+                    $entry->email = 'backpack@laravel.com';
+                    $entry->password = Hash::make('password');
+                },
+                'saving' => function ($entry) {
+                },
+                'saved' => function ($entry) {
+                },
+                'updating' => function ($entry) {
+                },
+                'updated' => function ($entry) {
+                },
+                'deleting' => function ($entry) {
+                },
+                'deleted' => function ($entry) {
+                },
+            ],
+        ]);
+
+        $this->crudPanel->registerFieldEvents();
+
+        $this->assertNotEmpty($this->crudPanel->getModel()->getEventDispatcher()->getListeners('eloquent.created: Backpack\CRUD\Tests\Config\Models\User'));
+        $this->assertNotEmpty($this->crudPanel->getModel()->getEventDispatcher()->getListeners('eloquent.creating: Backpack\CRUD\Tests\Config\Models\User'));
+        $this->assertNotEmpty($this->crudPanel->getModel()->getEventDispatcher()->getListeners('eloquent.saving: Backpack\CRUD\Tests\Config\Models\User'));
+        $this->assertNotEmpty($this->crudPanel->getModel()->getEventDispatcher()->getListeners('eloquent.saved: Backpack\CRUD\Tests\Config\Models\User'));
+        $this->assertNotEmpty($this->crudPanel->getModel()->getEventDispatcher()->getListeners('eloquent.updating: Backpack\CRUD\Tests\Config\Models\User'));
+        $this->assertNotEmpty($this->crudPanel->getModel()->getEventDispatcher()->getListeners('eloquent.updated: Backpack\CRUD\Tests\Config\Models\User'));
+        $this->assertNotEmpty($this->crudPanel->getModel()->getEventDispatcher()->getListeners('eloquent.deleting: Backpack\CRUD\Tests\Config\Models\User'));
+        $this->assertNotEmpty($this->crudPanel->getModel()->getEventDispatcher()->getListeners('eloquent.deleted: Backpack\CRUD\Tests\Config\Models\User'));
+
+        $this->crudPanel->getModel()->create(['name' => 'test']);
+
+        $this->assertEquals('backpack@laravel.com', User::latest('id')->first()->email);
+    }
+
+    private function getPivotInputData(array $pivotRelationData, bool $initCrud = true, bool $allowDuplicates = false)
+    {
+        $faker = Factory::create();
+
+        if ($initCrud) {
+            $this->crudPanel->setModel(User::class);
+            $this->crudPanel->addFields($this->userInputFieldsNoRelationships);
+            $this->crudPanel->addField([
+                'name' => array_key_first($pivotRelationData),
+                'allow_duplicate_pivots' => $allowDuplicates,
+                'pivot_key_name' => 'id',
+                'subfields' => [
+                    [
+                        'name' => 'notes',
+                    ],
+
+                ],
+            ]);
+
+            $article = Article::create([
+                'content' => $faker->text(),
+                'tags' => $faker->words(3, true),
+                'user_id' => 1,
+            ]);
+            $article2 = Article::create([
+                'content' => $faker->text(),
+                'tags' => $faker->words(3, true),
+                'user_id' => 1,
+            ]);
+        }
+
+        $inputData = [
+            'name' => $faker->name,
+            'email' => $faker->safeEmail,
+            'password' => Hash::make($faker->password()),
+            'remember_token' => null,
+        ];
+
+        return array_merge($inputData, $pivotRelationData);
     }
 }

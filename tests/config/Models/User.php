@@ -13,6 +13,11 @@ class User extends Model
 
     protected $fillable = ['name', 'email', 'password', 'extras'];
 
+    public function identifiableAttribute()
+    {
+        return 'name';
+    }
+
     /**
      * Get the account details associated with the user.
      */
@@ -52,6 +57,11 @@ class User extends Model
         return $this->morphToMany('Backpack\CRUD\Tests\config\Models\Recommend', 'recommendable')->withPivot('text');
     }
 
+    public function recommendsDuplicate()
+    {
+        return $this->morphToMany('Backpack\CRUD\Tests\config\Models\Recommend', 'recommendable')->withPivot(['text', 'id']);
+    }
+
     public function bills()
     {
         return $this->morphToMany('Backpack\CRUD\Tests\config\Models\Bill', 'billable');
@@ -65,6 +75,13 @@ class User extends Model
     public function superArticles()
     {
         return $this->belongsToMany('Backpack\CRUD\Tests\config\Models\Article', 'articles_user')->withPivot(['notes', 'start_date', 'end_date']);
+    }
+
+    public function superArticlesDuplicates()
+    {
+        return $this->belongsToMany('Backpack\CRUD\Tests\config\Models\Article', 'articles_user')
+                        ->withPivot(['notes', 'start_date', 'end_date', 'id'])
+                        ->using('Backpack\CRUD\Tests\config\Models\SuperArticlePivot');
     }
 
     public function universes()

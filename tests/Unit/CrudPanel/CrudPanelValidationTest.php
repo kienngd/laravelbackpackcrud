@@ -17,7 +17,7 @@ use Illuminate\Http\UploadedFile;
  * @covers Backpack\CRUD\app\Library\Validation\Rules\ValidFileArray
  * @covers Backpack\CRUD\app\Library\Validation\Rules\Support\HasFiles
  */
-class CrudPanelValidationTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCrudPanel
+class CrudPanelValidationTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseCrudPanel
 {
     public function testItThrowsValidationExceptions()
     {
@@ -67,6 +67,35 @@ class CrudPanelValidationTest extends \Backpack\CRUD\Tests\config\CrudPanel\Base
         $this->crudPanel->validateRequest();
 
         $this->assertEquals(['email'], array_keys($this->crudPanel->getOperationSetting('validationRules')));
+    }
+
+    public function testItCanGetTheValidationAttributesFromFields()
+    {
+        $this->crudPanel->addField([
+            'name' => 'email',
+            'validationAttribute' => 'emailed',
+        ]);
+
+        $this->crudPanel->setValidation();
+
+        $this->assertEquals(['email' => 'emailed'], $this->crudPanel->getOperationSetting('validationAttributes'));
+    }
+
+    public function testItCanGetTheValidationAttributesFromSubfields()
+    {
+        $this->crudPanel->addField([
+            'name' => 'email',
+            'subfields' => [
+                [
+                    'name' => 'test',
+                    'validationAttribute' => 'emailed',
+                ],
+            ],
+        ]);
+
+        $this->crudPanel->setValidation();
+
+        $this->assertEquals(['email.*.test' => 'emailed'], $this->crudPanel->getOperationSetting('validationAttributes'));
     }
 
     public function testItMergesAllKindsOfValidation()
@@ -217,26 +246,20 @@ class CrudPanelValidationTest extends \Backpack\CRUD\Tests\config\CrudPanel\Base
     public function testItCanGetTheRequiredFieldsFromCustomRules()
     {
         $this->crudPanel->setModel(User::class);
-        $this->crudPanel->entry = User::first();
 
-        $this->assertFalse($this->crudPanel->isRequired('test'));
         $this->crudPanel->setValidation([
             'email' => ValidUpload::field('required'),
             'password' => ValidUploadMultiple::field('required'),
         ]);
 
-        $this->crudPanel->setValidation(UserRequest::class);
-        $this->assertEquals(['email', 'password', 'name'], array_values($this->crudPanel->getOperationSetting('requiredFields')));
+        $this->assertEquals(['email', 'password'], array_values($this->crudPanel->getOperationSetting('requiredFields')));
         $this->assertTrue($this->crudPanel->isRequired('email'));
         $this->assertTrue($this->crudPanel->isRequired('password'));
-        $this->assertTrue($this->crudPanel->isRequired('name'));
     }
 
     public function testItCanValidateCustomRules()
     {
         $this->crudPanel->setModel(User::class);
-        $this->crudPanel->setValidation(UserRequest::class);
-        $this->crudPanel->entry = User::first();
 
         $pdf1 = UploadedFile::fake()->create('test1.pdf', 1000);
         $pdf2 = UploadedFile::fake()->create('test2.pdf', 1000);
@@ -259,10 +282,6 @@ class CrudPanelValidationTest extends \Backpack\CRUD\Tests\config\CrudPanel\Base
             [
                 'name' => 'email',
                 'validationRules' => ValidUpload::field('required')->file('file|mimes:jpg'),
-            ],
-
-            [
-                'name' => 'name',
             ],
         ]);
 

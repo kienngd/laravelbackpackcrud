@@ -35,6 +35,7 @@
               </div>
             @endif
           </div>
+          @if($crud->getOperationSetting('searchableTable'))
           <div class="col-sm-3">
             <div id="datatable_search_stack" class="mt-sm-0 mt-2 d-print-none">
               <div class="input-icon">
@@ -45,6 +46,7 @@
               </div>
             </div>
           </div>
+          @endif
         </div>
 
         {{-- Backpack List Filters --}}
@@ -73,7 +75,7 @@
                     data-visible-in-table => if developer forced field in table with 'visibleInTable => true'
                     data-visible => regular visibility of the field
                     data-can-be-visible-in-table => prevents the column to be loaded into the table (export-only)
-                    data-visible-in-modal => if column apears on responsive modal
+                    data-visible-in-modal => if column appears on responsive modal
                     data-visible-in-export => if this field is exportable
                     data-force-export => force export even if field are hidden
                     --}}
