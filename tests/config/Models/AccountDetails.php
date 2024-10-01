@@ -3,6 +3,7 @@
 namespace Backpack\CRUD\Tests\Config\Models;
 
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 class AccountDetails extends Model
@@ -11,6 +12,11 @@ class AccountDetails extends Model
 
     protected $table = 'account_details';
     protected $fillable = ['user_id', 'nickname', 'profile_picture', 'article_id', 'start_date', 'end_date'];
+
+    public function identifiableAttribute()
+    {
+        return 'nickname';
+    }
 
     /**
      * Get the user for the account details.
@@ -43,5 +49,10 @@ class AccountDetails extends Model
     public function bangsPivot()
     {
         return $this->belongsToMany('Backpack\CRUD\Tests\config\Models\Bang', 'account_details_bangs_pivot')->withPivot('pivot_field');
+    }
+
+    public function nicknamutator(): Attribute
+    {
+        return Attribute::get(fn ($value) => strtoupper($value));
     }
 }

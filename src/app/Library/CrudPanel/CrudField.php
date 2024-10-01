@@ -56,6 +56,10 @@ class CrudField
             $name = $nameOrDefinitionArray;
         }
 
+        if (is_array($name)) {
+            abort(500, 'Field name can\'t be an array. It should be a string. Error in field: '.json_encode($name));
+        }
+
         $field = $this->crud()->firstFieldWhere('name', $name);
 
         // if field exists
@@ -365,6 +369,7 @@ class CrudField
     {
         return $this->attributes;
     }
+
     // ---------------
     // PRIVATE METHODS
     // ---------------
@@ -404,9 +409,23 @@ class CrudField
             $this->crud()->modifyField($key, $this->attributes);
         } else {
             $this->crud()->addField($this->attributes);
+            $this->attributes = $this->getFreshAttributes();
         }
 
         return $this;
+    }
+
+    /**
+     * Get the fresh attributes for the current field.
+     *
+     * @return array
+     */
+    private function getFreshAttributes()
+    {
+        $key = isset($this->attributes['key']) ? 'key' : 'name';
+        $search = $this->attributes['key'] ?? $this->attributes['name'];
+
+        return $this->crud()->firstFieldWhere($key, $search);
     }
 
     // -----------------
@@ -429,7 +448,7 @@ class CrudField
     }
 
     /**
-     * Dump and die. Duumps the current object to the screen,
+     * Dump and die. Dumps the current object to the screen,
      * so that the developer can see its contents, then stops
      * the execution.
      *

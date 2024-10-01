@@ -4,6 +4,7 @@ namespace Backpack\CRUD\Tests\Unit\CrudPanel;
 
 use Arr;
 use Backpack\CRUD\app\Library\CrudPanel\CrudField;
+use Backpack\CRUD\Tests\config\CrudPanel\BaseCrudPanel;
 use Backpack\CRUD\Tests\config\Models\Star;
 use Backpack\CRUD\Tests\config\Models\User;
 use Illuminate\Http\Request;
@@ -12,9 +13,12 @@ use Illuminate\Http\Request;
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Fields
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\FieldsProtectedMethods
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\FieldsPrivateMethods
+ * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Input
  * @covers Backpack\CRUD\app\Library\CrudPanel\CrudField
+ * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Input
+ * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Views
  */
-class CrudPanelFieldsTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCrudPanel
+class CrudPanelFieldsTest extends BaseCrudPanel
 {
     private $oneTextFieldArray = [
         'name' => 'field1',
@@ -300,7 +304,7 @@ class CrudPanelFieldsTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         $this->crudPanel->addFields($this->threeTextFieldsArray, 'create');
 
         $this->assertEquals(3, count($this->crudPanel->fields()));
-        $this->assertEquals($this->expectedThreeTextFieldsArray, $this->crudPanel->fields());
+        $this->assertEquals($this->expectedThreeTextFieldsArray, $this->crudPanel->getCreateFields());
     }
 
     public function testAddFieldsForUpdateForm()
@@ -718,6 +722,7 @@ class CrudPanelFieldsTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
     {
         $this->crudPanel->addField(['name' => 'test', 'view_namespace' => 'test_namespace']);
         $this->assertEquals('test_namespace.text', $this->crudPanel->getFieldTypeWithNamespace($this->crudPanel->fields()['test']));
+        $this->assertEquals('test', $this->crudPanel->getFieldTypeWithNamespace('test'));
     }
 
     public function testItCanGetAllFieldNames()
@@ -789,6 +794,20 @@ class CrudPanelFieldsTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
             ],
 
         ], $this->crudPanel->fields()['my_field']);
+    }
+
+    public function testAddFieldFluentClassUsingArrayDefinition()
+    {
+        $this->crudPanel->field($this->oneTextFieldArray);
+
+        $this->assertEquals(1, count($this->crudPanel->fields()));
+        $this->assertEquals($this->expectedOneTextFieldArray, $this->crudPanel->fields());
+    }
+
+    public function testItCanFluentlyAddUploadAttribute()
+    {
+        $this->crudPanel->field('avatar')->upload();
+        $this->assertEquals(true, $this->crudPanel->fields()['avatar']['upload']);
     }
 
     public function testItCanMakeAFieldFirstFluently()
@@ -889,7 +908,7 @@ class CrudPanelFieldsTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
         );
     }
 
-    public function testCheckReturnTypesForWhenInferingRelation()
+    public function testCheckReturnTypesForWhenInferringRelation()
     {
         $this->crudPanel->setModel(\Backpack\CRUD\Tests\config\Models\UserWithReturnTypes::class);
         $this->crudPanel->addField('isAnAttribute');
@@ -897,6 +916,90 @@ class CrudPanelFieldsTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCr
 
         $this->assertEquals(false, $this->crudPanel->fields()['isAnAttribute']['entity']);
         $this->assertEquals('isARelation', $this->crudPanel->fields()['isARelation']['entity']);
+    }
+
+    public function testItCanGetTheFirstFieldViewWithoutProvidingNamespace()
+    {
+        $this->assertEquals('backpack.theme-coreuiv2::fields.test', $this->crudPanel->getFirstFieldView('test'));
+    }
+
+    public function testItCanGetTheFirstFieldViewInProvidedNamespace()
+    {
+        $this->assertEquals('backpack.theme-coreuiv2::fields.custom_namespace.test', $this->crudPanel->getFirstFieldView('test', 'backpack.theme-coreuiv2::fields.custom_namespace'));
+    }
+
+    public function testItDoesntAttemptToMoveFieldsIfTheyDontExist()
+    {
+        $this->assertFalse($this->crudPanel->makeFirstField());
+    }
+
+    public function testItThrowExceptionWhenViewNotFound()
+    {
+        $this->expectException(\Exception::class);
+        $this->crudPanel->getFirstFieldView('test2');
+    }
+
+    public function testItCanGetUploadFieldsFromSubfields()
+    {
+        $this->crudPanel->addField([
+            'name' => 'test1',
+            'subfields' => [
+                ['name' => 'test1_1', 'upload' => true],
+                ['name' => 'test1_2'],
+            ],
+        ]);
+        $this->crudPanel->addField([
+            'name' => 'test2',
+            'subfields' => [
+                ['name' => 'test2_1'],
+                ['name' => 'test2_2'],
+            ],
+        ]);
+
+        $this->assertCount(2, $this->crudPanel->getFields());
+        $this->assertTrue($this->crudPanel->hasUploadFields());
+    }
+
+    public function testItCanMarkAFieldTypeAsLoaded()
+    {
+        $this->crudPanel->addField([
+            'name' => 'test1',
+            'type' => 'text',
+        ]);
+        $field = $this->crudPanel->fields()['test1'];
+        $this->assertTrue($this->crudPanel->markFieldTypeAsLoaded($field));
+        $this->assertFalse($this->crudPanel->markFieldTypeAsLoaded($field));
+        $this->assertTrue($this->crudPanel->fieldTypeLoaded($field));
+        $this->assertTrue($this->crudPanel->fieldTypeNotLoaded(['type' => 'test']));
+        $this->assertEquals(['text'], $this->crudPanel->getLoadedFieldTypes());
+    }
+
+    public function testItCanGetFieldNamesFromNamesWithCommas()
+    {
+        $this->crudPanel->addField('test1, test2');
+        $this->assertEquals(['test1', 'test2'], $this->crudPanel->getAllFieldNames());
+    }
+
+    public function testItCanInferFieldAttributesFromADynamicRelation()
+    {
+        User::resolveRelationUsing('dynamicRelation', function ($user) {
+            return $user->hasOne(\Backpack\CRUD\Tests\config\Models\AccountDetails::class);
+        });
+
+        $this->crudPanel->setModel(User::class);
+        $this->crudPanel->addField('dynamicRelation.nickname');
+
+        $this->assertEquals([
+            'name' => 'dynamicRelation[nickname]',
+            'type' => 'relationship',
+            'entity' => 'dynamicRelation.nickname',
+            'relation_type' => 'HasOne',
+            'attribute' => 'nickname',
+            'model' => 'Backpack\CRUD\Tests\Config\Models\AccountDetails',
+            'multiple' => false,
+            'pivot' => false,
+            'label' => 'DynamicRelation.nickname',
+        ], $this->crudPanel->fields()['dynamicRelation.nickname']);
     }
 }
 

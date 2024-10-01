@@ -32,8 +32,19 @@ return [
     // Should we show a cancel button to the user?
     'showCancelButton' => true,
 
+    // Should we show the delete button on the edit form?
+    'showDeleteButton' => false,
+
     // Should we warn a user before leaving the page with unsaved changes?
     'warnBeforeLeaving' => false,
+
+    // when viewing the update form of an entry in a language that's not translated should Backpack show a notice
+    // that allows the user to fill the form from another language?
+    'showTranslationNotice' => true,
+
+    // when loading an update form, should Backpack eager load the relationship information from database?
+    // this is generally a good thing to enable, as it helps to reduce the number of queries.
+    'eagerLoadRelationships' => false,
 
     // Before saving the entry, how would you like the request to be stripped?
     //  - false - use Backpack's default (ONLY save inputs that have fields)

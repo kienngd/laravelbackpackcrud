@@ -38,7 +38,9 @@
                       CRUD::field('name')->validationRules('required|min:5');
                       CRUD::field('email')->validationRules('required|email|unique:users,email');
                       CRUD::field('password')->validationRules('required');
-
+                      
+                      // if you are using Laravel 10+ your User model should already include the password hashing in the model casts.
+                      // if that's the case, you can skip this step. You can check your model $casts property or `casts()` method.
                       \App\Models\User::creating(function ($entry) {
                           $entry->password = \Hash::make($entry->password);
                       });
@@ -54,13 +56,23 @@
                       CRUD::field('email')->validationRules('required|email|unique:users,email,'.CRUD::getCurrentEntryId());
                       CRUD::field('password')->hint('Type a password to change it.');
 
+                      // if you are using Laravel 10+ your User model should already include the password hashing in the model casts.
+                      // if that's the case, you just need to keep the old password unchanged when the user is updated.
                       \App\Models\User::updating(function ($entry) {
                           if (request('password') == null) {
-                              $entry->password = $entry->getOriginal('password');
-                          } else {
-                              $entry->password = \Hash::make(request('password'));
+                            $entry->password = $entry->getOriginal('password');
                           }
                       });
+
+                      // in case you are using an older version of Laravel, or you are not casting your password in the model, you need
+                      // to manually hash the password when it's updated by the user
+                      \App\Models\User::updating(function ($entry) {
+                        if (request('password') == null) {
+                            $entry->password = $entry->getOriginal('password');
+                        } else {
+                            $entry->password = \Hash::make(request('password'));
+                        }
+                    });
                   }
                 </code></pre>
               </p>
@@ -90,11 +102,12 @@
 
       <div class="card mb-1">
         <div class="card-header bg-light" id="headingThree" role="tab">
-          <h5 class="mb-0 w-100"><a class="collapsed" data-bs-toggle="collapse" data-toggle="collapse" href="#collapseThree" aria-expanded="false" aria-controls="collapseThree"><span class="badge bg-warning me-2">4</span>Subscribe or purchase <small class="float-end float-right">1-3 min</small></a></h5>
+          <h5 class="mb-0 w-100"><a class="collapsed" data-bs-toggle="collapse" data-toggle="collapse" href="#collapseThree" aria-expanded="false" aria-controls="collapseThree"><span class="badge bg-warning me-2">3</span>Subscribe or purchase <small class="float-end float-right">1-3 min</small></a></h5>
         </div>
         <div class="collapse" id="collapseThree" role="tabpanel" aria-labelledby="headingThree" data-parent="#accordion" style="">
           <div class="card-body">
-            <p>If you decide to use Backpack, please <strong><a target="_blank" href="https://backpackforlaravel.com/register?ref=getting-started-widget">create a Backpack account</a> and stay subscribed to the Security Newsletter</strong> (1-2 emails per year). That way, we can let you know if your admin panel becomes vulnerable in any way.</p>
+            <p>If you like Backpack, please <a target="_blank" href="https://github.com/laravel-backpack/crud">give us a star on Gitub</a> - it could help other developer like us find Backpack and join our community.</p>
+            <p>If you decide to use Backpack in production, please <strong><a target="_blank" href="https://backpackforlaravel.com/register?ref=getting-started-widget">create a Backpack account</a> and stay subscribed to the Security Newsletter</strong> (1-2 emails per year). That way, we can let you know if your admin panel becomes vulnerable in any way.</p>
             <p>Of course, if you like our free & open-source core, you might also enjoy our premium add-ons:</p>
             <ul>
               <li><strong><a target="_blank" href="https://backpackforlaravel.com/products/pro-for-unlimited-projects?ref=getting-started-widget">PRO</a></strong> - adds 28 fields, 10 filters, 6 columns, 5 operations, 1 widget</li>

@@ -21,20 +21,21 @@ class BackpackServiceProvider extends ServiceProvider
     use Stats;
 
     protected $commands = [
-        \Backpack\CRUD\app\Console\Commands\Install::class,
-        \Backpack\CRUD\app\Console\Commands\AddMenuContent::class,
-        \Backpack\CRUD\app\Console\Commands\AddCustomRouteContent::class,
-        \Backpack\CRUD\app\Console\Commands\Version::class,
-        \Backpack\CRUD\app\Console\Commands\CreateUser::class,
-        \Backpack\CRUD\app\Console\Commands\PublishBackpackMiddleware::class,
-        \Backpack\CRUD\app\Console\Commands\PublishView::class,
-        \Backpack\CRUD\app\Console\Commands\Addons\RequireDevTools::class,
-        \Backpack\CRUD\app\Console\Commands\Addons\RequireEditableColumns::class,
-        \Backpack\CRUD\app\Console\Commands\Addons\RequirePro::class,
-        \Backpack\CRUD\app\Console\Commands\Themes\RequireThemeTabler::class,
-        \Backpack\CRUD\app\Console\Commands\Themes\RequireThemeCoreuiv2::class,
-        \Backpack\CRUD\app\Console\Commands\Themes\RequireThemeCoreuiv4::class,
-        \Backpack\CRUD\app\Console\Commands\Fix::class,
+        app\Console\Commands\Install::class,
+        app\Console\Commands\AddMenuContent::class,
+        app\Console\Commands\AddCustomRouteContent::class,
+        app\Console\Commands\Version::class,
+        app\Console\Commands\CreateUser::class,
+        app\Console\Commands\PublishBackpackMiddleware::class,
+        app\Console\Commands\PublishView::class,
+        app\Console\Commands\Addons\RequireDevTools::class,
+        app\Console\Commands\Addons\RequireEditableColumns::class,
+        app\Console\Commands\Addons\RequirePro::class,
+        app\Console\Commands\Themes\RequireThemeTabler::class,
+        app\Console\Commands\Themes\RequireThemeCoreuiv2::class,
+        app\Console\Commands\Themes\RequireThemeCoreuiv4::class,
+        app\Console\Commands\Fix::class,
+        app\Console\Commands\PublishHeaderMetas::class,
     ];
 
     // Indicates if loading of the provider is deferred.
@@ -140,7 +141,6 @@ class BackpackServiceProvider extends ServiceProvider
     public function publishFiles()
     {
         $backpack_views = [__DIR__.'/resources/views' => resource_path('views/vendor/backpack')];
-        $backpack_public_assets = [__DIR__.'/public' => public_path()];
         $backpack_lang_files = [__DIR__.'/resources/lang' => app()->langPath().'/vendor/backpack'];
         $backpack_config_files = [__DIR__.'/config' => config_path()];
 
@@ -158,7 +158,6 @@ class BackpackServiceProvider extends ServiceProvider
         $minimum = array_merge(
             // $backpack_views,
             // $backpack_lang_files,
-            $backpack_public_assets,
             $backpack_config_files,
             $backpack_menu_contents_view,
             $backpack_custom_routes_file,
@@ -170,7 +169,6 @@ class BackpackServiceProvider extends ServiceProvider
         $this->publishes($backpack_lang_files, 'lang');
         $this->publishes($backpack_views, 'views');
         $this->publishes($backpack_menu_contents_view, 'menu_contents');
-        $this->publishes($backpack_public_assets, 'public');
         // $this->publishes($backpack_custom_routes_file, 'custom_routes');
         $this->publishes($gravatar_assets, 'gravatar');
         $this->publishes($minimum, 'minimum');

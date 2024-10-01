@@ -60,9 +60,6 @@ class CrudColumn
             $this->setAttributeValue('name', $name);
         }
 
-        // guess all attributes that weren't explicitly defined
-        $this->attributes = $this->crud()->makeSureColumnHasNeededAttributes($this->attributes);
-
         $this->save();
     }
 
@@ -146,6 +143,12 @@ class CrudColumn
         return $this;
     }
 
+    /** Alias of after() */
+    public function afterColumn(string $destinationColumn)
+    {
+        $this->after($destinationColumn);
+    }
+
     /**
      * Move the current column before another column.
      *
@@ -213,7 +216,7 @@ class CrudColumn
     }
 
     /**
-     * Dump and die. Duumps the current object to the screen,
+     * Dump and die. Dumps the current object to the screen,
      * so that the developer can see its contents, then stops
      * the execution.
      *
@@ -272,9 +275,23 @@ class CrudColumn
             $this->crud()->setColumnDetails($key, $this->attributes);
         } else {
             $this->crud()->addColumn($this->attributes);
+            $this->attributes = $this->getFreshAttributes();
         }
 
         return $this;
+    }
+
+    /**
+     * Get the fresh attributes for the current column.
+     *
+     * @return array
+     */
+    private function getFreshAttributes()
+    {
+        $key = isset($this->attributes['key']) ? 'key' : 'name';
+        $search = $this->attributes['key'] ?? $this->attributes['name'];
+
+        return $this->crud()->firstColumnWhere($key, $search);
     }
 
     // -------------

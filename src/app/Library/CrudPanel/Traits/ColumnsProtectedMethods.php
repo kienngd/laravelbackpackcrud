@@ -161,13 +161,12 @@ trait ColumnsProtectedMethods
     }
 
     /**
-     * If a column definition is missing the wrapper element, set the default (empty).
-     * The wrapper is the HTML element that wrappes around the column text.
-     * By defining this array a developer can wrap the text into an anchor (link),
-     * span, div or whatever they want.
+     * @deprecated Never used. Will be removed in a future version.
      *
      * @param  array  $column  Column definition array.
      * @return array Column definition array with wrapper.
+     *
+     * @codeCoverageIgnore
      */
     protected function makeSureColumnHasWrapper($column)
     {
@@ -211,7 +210,7 @@ trait ColumnsProtectedMethods
         }
 
         // if there's a method on the model with this name
-        if (method_exists($this->model, $column['name'])) {
+        if (method_exists($this->model, $column['name']) || $this->model->isRelation($column['name'])) {
             // check model method for possibility of being a relationship
             $column['entity'] = $this->modelMethodIsRelationship($this->model, $column['name']);
 
@@ -297,6 +296,13 @@ trait ColumnsProtectedMethods
                 array_search($targetColumnName, array_keys($columnsArray)) + 1;
 
             $element = array_pop($columnsArray);
+
+            if ($element['priority'] === count($columnsArray)) {
+                // the priority was most likely auto-set as it corresponds to the column array count
+                // update the priority to the target column position
+                $element['priority'] = $targetColumnPosition;
+            }
+
             $beginningPart = array_slice($columnsArray, 0, $targetColumnPosition, true);
             $endingArrayPart = array_slice($columnsArray, $targetColumnPosition, null, true);
 

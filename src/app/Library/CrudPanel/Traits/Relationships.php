@@ -19,11 +19,14 @@ trait Relationships
         $possible_method = Str::before($entity, '.');
         $model = isset($field['baseModel']) ? app($field['baseModel']) : $this->model;
 
-        if (method_exists($model, $possible_method)) {
+        if (method_exists($model, $possible_method) || $model->isRelation($possible_method)) {
             $parts = explode('.', $entity);
             // here we are going to iterate through all relation parts to check
             foreach ($parts as $i => $part) {
                 $relation = $model->$part();
+                if (! is_a($relation, \Illuminate\Database\Eloquent\Relations\Relation::class, true)) {
+                    return $model;
+                }
                 $model = $relation->getRelated();
             }
 
@@ -62,10 +65,10 @@ trait Relationships
     public function getOnlyRelationEntity($field)
     {
         $entity = isset($field['baseEntity']) ? $field['baseEntity'].'.'.$field['entity'] : $field['entity'];
-        $model = $this->getRelationModel($entity, -1);
-        $lastSegmentAfterDot = Str::of($field['entity'])->afterLast('.');
+        $model = new ($this->getRelationModel($entity, -1));
+        $lastSegmentAfterDot = Str::of($field['entity'])->afterLast('.')->value();
 
-        if (! method_exists($model, $lastSegmentAfterDot)) {
+        if (! $this->modelMethodIsRelationship($model, $lastSegmentAfterDot)) {
             return (string) Str::of($field['entity'])->beforeLast('.');
         }
 
@@ -97,7 +100,7 @@ trait Relationships
     }
 
     /**
-     * Parse the field name back to the related entity after the form is submited.
+     * Parse the field name back to the related entity after the form is submitted.
      * Its called in getAllFieldNames().
      *
      * @param  array  $fields
@@ -271,7 +274,7 @@ trait Relationships
     {
         $relation = $this->getRelationInstance($field);
 
-        if (Str::afterLast($field['name'], '.') === $relation->getRelationName()) {
+        if (Str::afterLast($field['name'], '.') === $relation->getRelationName() || Str::endsWith($relation->getRelationName(), '{closure}')) {
             return $relation->getForeignKeyName();
         }
 
@@ -319,15 +322,20 @@ trait Relationships
      * If the return type extends the Relation class is for sure a relation
      * Otherwise we just assume it's a relation.
      *
-     * DEV NOTE: In future versions we will return `false` when no return type is set and make the return type mandatory for relationships.
-     *           This function should be refactored to only check if $returnType is a subclass of Illuminate\Database\Eloquent\Relations\Relation.
-     *
      * @param  $model
      * @param  $method
      * @return bool|string
      */
     private function modelMethodIsRelationship($model, $method)
     {
+        if (! method_exists($model, $method)) {
+            if ($model->isRelation($method)) {
+                return $method;
+            }
+
+            return false;
+        }
+
         $methodReflection = new \ReflectionMethod($model, $method);
 
         // relationship methods function does not have parameters
@@ -377,7 +385,13 @@ trait Relationships
         // if the attribute is present in the relation string.
         foreach ($parts as $i => $part) {
             try {
-                $model = $model->$part()->getRelated();
+                $model = $model->$part();
+
+                if (! is_a($model, \Illuminate\Database\Eloquent\Relations\Relation::class, true)) {
+                    return true;
+                }
+
+                $model = $model->getRelated();
             } catch (\Exception $e) {
                 // return true if the last part of a relation string is not a method on the model
                 // so it's probably the attribute that we should show

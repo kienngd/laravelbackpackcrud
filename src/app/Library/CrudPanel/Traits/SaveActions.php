@@ -60,7 +60,7 @@ trait SaveActions
      */
     public function addSaveActions($saveActions)
     {
-        // count vs count recursive will be diferent when counting single dimension vs multiple dimension arrays.
+        // count vs count recursive will be different when counting single dimension vs multiple dimension arrays.
         // count([1,2]) = 2, count([1,[2,3]]) = 2 with recursive it's 3. so if counts are different we have a
         // multi dimensional array
         if (count($saveActions) != count($saveActions, COUNT_RECURSIVE)) {
@@ -81,9 +81,7 @@ trait SaveActions
         $orderCounter = $this->getOperationSetting('save_actions') !== null ? (count($this->getOperationSetting('save_actions')) + 1) : 1;
         //check for some mandatory fields
         $saveAction['name'] ?? abort(500, 'Please define save action name.');
-        $saveAction['redirect'] = $saveAction['redirect'] ?? function ($crud, $request, $itemId) {
-            return $request->has('_http_referrer') ? $request->get('_http_referrer') : $crud->route;
-        };
+        $saveAction['redirect'] = $saveAction['redirect'] ?? fn ($crud, $request, $itemId) => $request->has('_http_referrer') ? $request->get('_http_referrer') : $crud->route;
         $saveAction['visible'] = $saveAction['visible'] ?? true;
         $saveAction['button_text'] = $saveAction['button_text'] ?? $saveAction['name'];
         $saveAction['order'] = isset($saveAction['order']) ? $this->orderSaveAction($saveAction['name'], $saveAction['order']) : $orderCounter;
@@ -235,7 +233,7 @@ trait SaveActions
         $actions = $this->getOrderedSaveActions();
         foreach ($actions as $actionName => $action) {
             $visible = $action['visible'];
-            if (is_callable($visible)) {
+            if ($visible instanceof \Closure) {
                 $actions[$actionName]['visible'] = $visible($this);
             }
         }
@@ -277,6 +275,10 @@ trait SaveActions
         //get only the save actions that pass visibility callback
         $saveOptions = $this->getVisibleSaveActions();
 
+        if (empty($saveOptions)) {
+            return [];
+        }
+
         //get the current action
         $saveCurrent = $this->getCurrentSaveAction($saveOptions);
 
@@ -303,7 +305,7 @@ trait SaveActions
     public function setSaveAction($forceSaveAction = null)
     {
         $saveAction = $forceSaveAction ?:
-            \Request::input('_save_action', $this->getFallBackSaveAction());
+            $this->getRequest()->input('_save_action', $this->getFallBackSaveAction());
 
         $showBubble = $this->getOperationSetting('showSaveActionChange') ?? config('backpack.crud.operations.'.$this->getCurrentOperation().'.showSaveActionChange') ?? true;
 
@@ -325,20 +327,20 @@ trait SaveActions
      */
     public function performSaveAction($itemId = null)
     {
-        $request = \Request::instance();
+        $request = $this->getRequest();
         $saveAction = $request->input('_save_action', $this->getFallBackSaveAction());
         $itemId = $itemId ?: $request->input('id');
         $actions = $this->getOperationSetting('save_actions');
         $redirectUrl = $this->route;
 
         if (isset($actions[$saveAction])) {
-            if (is_callable($actions[$saveAction]['redirect'])) {
+            if ($actions[$saveAction]['redirect'] instanceof \Closure) {
                 $redirectUrl = $actions[$saveAction]['redirect']($this, $request, $itemId);
             }
 
             //allow the save action to define default http_referrer (url for the save_and_back button)
             if (isset($actions[$saveAction]['referrer_url'])) {
-                if (is_callable($actions[$saveAction]['referrer_url'])) {
+                if ($actions[$saveAction]['referrer_url'] instanceof \Closure) {
                     $referrer_url = $actions[$saveAction]['referrer_url']($this, $request, $itemId);
                 }
             }
@@ -375,7 +377,7 @@ trait SaveActions
                     return $crud->hasAccess('list');
                 },
                 'redirect' => function ($crud, $request, $itemId = null) {
-                    return $request->request->has('_http_referrer') ? $request->request->get('_http_referrer') : $crud->route;
+                    return $request->has('_http_referrer') ? $request->get('_http_referrer') : $crud->route;
                 },
                 'button_text' => trans('backpack::crud.save_action_save_and_back'),
             ],
@@ -385,13 +387,13 @@ trait SaveActions
                     return $crud->hasAccess('update');
                 },
                 'redirect' => function ($crud, $request, $itemId = null) {
-                    $itemId = $itemId ?: $request->request->get('id');
+                    $itemId = $itemId ?: $request->get('id');
                     $redirectUrl = $crud->route.'/'.$itemId.'/edit';
-                    if ($request->request->has('_locale')) {
-                        $redirectUrl .= '?_locale='.$request->request->get('_locale');
+                    if ($request->has('_locale')) {
+                        $redirectUrl .= '?_locale='.$request->get('_locale');
                     }
-                    if ($request->request->has('_current_tab')) {
-                        $redirectUrl = $redirectUrl.'#'.$request->request->get('_current_tab');
+                    if ($request->has('_current_tab')) {
+                        $redirectUrl = $redirectUrl.'#'.$request->get('_current_tab');
                     }
 
                     return $redirectUrl;

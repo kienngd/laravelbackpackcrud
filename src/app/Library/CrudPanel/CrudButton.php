@@ -16,7 +16,7 @@ use Illuminate\Support\Traits\Conditionable;
  * - CRUD::button('create')->stack('top')->view('crud::buttons.create');
  *
  * And if the developer uses CrudButton as Button in their CrudController:
- * - Button::name('create')->stack('top')->view('crud::butons.create');
+ * - Button::name('create')->stack('top')->view('crud::buttons.create');
  */
 class CrudButton implements Arrayable
 {
@@ -42,7 +42,10 @@ class CrudButton implements Arrayable
             extract($nameOrAttributes);
         }
 
-        $this->name = $nameOrAttributes ?? 'button_'.rand(1, 999999999);
+        // if $name was not extracted and there is no string to use as name, generate a random one
+        $name ??= is_string($nameOrAttributes) ? $nameOrAttributes : 'button_'.rand(1, 999999999);
+
+        $this->name = $name;
         $this->stack = $stack ?? 'top';
         $this->type = $type ?? 'view';
         $this->content = $content;
@@ -182,7 +185,6 @@ class CrudButton implements Arrayable
 
             default:
                 abort(500, "Unknown button position - please use 'beginning' or 'end'.");
-                break;
         }
 
         return $this;
@@ -232,7 +234,7 @@ class CrudButton implements Arrayable
 
     /**
      * Unserts an property that is set on the current button.
-     * Possible properties: name, stack, type, content.
+     * Possible properties: name, stack, type, content, meta.
      *
      * @param  string  $property  Name of the property that should be cleared.
      * @return CrudButton
@@ -411,7 +413,7 @@ class CrudButton implements Arrayable
      */
     public function remove()
     {
-        $this->crud()->removeButton($this->getKey());
+        $this->crud()->removeButton($this->collection()[$this->getKey()]->name);
     }
 
     // --------------
@@ -459,7 +461,7 @@ class CrudButton implements Arrayable
     }
 
     /**
-     * Dump and die. Duumps the current object to the screen,
+     * Dump and die. Dumps the current object to the screen,
      * so that the developer can see its contents, then stops
      * the execution.
      *

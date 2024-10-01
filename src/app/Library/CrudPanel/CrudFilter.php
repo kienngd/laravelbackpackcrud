@@ -222,7 +222,7 @@ class CrudFilter
 
     /**
      * Remove an attribute from one field's definition array.
-     * (ununsed function).
+     * (unused function).
      *
      * @param  string  $field  The name of the field.
      * @param  string  $attribute  The name of the attribute being removed.
@@ -363,6 +363,7 @@ class CrudFilter
     public function view($value)
     {
         $this->view = $value;
+        $this->options['view'] = $value;
 
         return $this->save();
     }
@@ -582,7 +583,7 @@ class CrudFilter
     }
 
     /**
-     * Dump and die. Duumps the current object to the screen,
+     * Dump and die. Dumps the current object to the screen,
      * so that the developer can see its contents, then stops
      * the execution.
      *

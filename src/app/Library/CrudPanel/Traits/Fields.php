@@ -257,7 +257,7 @@ trait Fields
 
     /**
      * Check if field is the first of its type in the given fields array.
-     * It's used in each field_type.blade.php to determine wether to push the css and js content or not (we only need to push the js and css for a field the first time it's loaded in the form, not any subsequent times).
+     * It's used in each field_type.blade.php to determine whether to push the css and js content or not (we only need to push the js and css for a field the first time it's loaded in the form, not any subsequent times).
      *
      * @param  array  $field  The current field being tested if it's the first of its type.
      * @return bool true/false
@@ -272,41 +272,6 @@ trait Fields
         }
 
         return false;
-    }
-
-    /**
-     * Decode attributes that are casted as array/object/json in the model.
-     * So that they are not json_encoded twice before they are stored in the db
-     * (once by Backpack in front-end, once by Laravel Attribute Casting).
-     *
-     * @param  array  $input
-     * @param  mixed  $model
-     * @return array
-     */
-    public function decodeJsonCastedAttributes($input, $model = false)
-    {
-        $model = $model ? $model : $this->model;
-        $fields = $this->getCleanStateFields();
-        $casted_attributes = $model->getCastedAttributes();
-
-        foreach ($fields as $field) {
-            // Test the field is castable
-            if (isset($field['name']) && is_string($field['name']) && array_key_exists($field['name'], $casted_attributes)) {
-                // Handle JSON field types
-                $jsonCastables = ['array', 'object', 'json'];
-                $fieldCasting = $casted_attributes[$field['name']];
-
-                if (in_array($fieldCasting, $jsonCastables) && isset($input[$field['name']]) && ! empty($input[$field['name']]) && ! is_array($input[$field['name']])) {
-                    try {
-                        $input[$field['name']] = json_decode($input[$field['name']]);
-                    } catch (\Exception $e) {
-                        $input[$field['name']] = [];
-                    }
-                }
-            }
-        }
-
-        return $input;
     }
 
     /**

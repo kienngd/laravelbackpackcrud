@@ -4,8 +4,11 @@ namespace Backpack\CRUD\Tests;
 
 use Backpack\Basset\BassetServiceProvider;
 use Backpack\CRUD\BackpackServiceProvider;
+use Backpack\CRUD\Tests\config\TestsServiceProvider;
+use Illuminate\Routing\Route as RouteInstance;
 use Illuminate\Support\Facades\Route;
 use Orchestra\Testbench\TestCase;
+use Prologue\Alerts\AlertsServiceProvider;
 
 abstract class BaseTestClass extends TestCase
 {
@@ -36,7 +39,39 @@ abstract class BaseTestClass extends TestCase
         return [
             BassetServiceProvider::class,
             BackpackServiceProvider::class,
+            AlertsServiceProvider::class,
+            TestsServiceProvider::class,
         ];
+    }
+
+    protected function setupUserCreateRequest()
+    {
+        $request = request()->create('/admin/users/create', 'POST', ['name' => 'foo']);
+        $request->setRouteResolver(function () use ($request) {
+            return (new RouteInstance('POST', 'admin/users/create', ['UserCrudController', 'create']))->bind($request);
+        });
+        $this->crudPanel->setRequest($request);
+    }
+
+    protected function makeAnArticleModel(array $attributes = [])
+    {
+        $attributes = array_merge([
+            'id' => 1,
+            'content' => 'Some Content',
+        ], $attributes);
+
+        return \Backpack\CRUD\Tests\config\Models\Article::make($attributes);
+    }
+
+    protected function makeAUserModel(array $attributes = [])
+    {
+        $attributes = array_merge([
+            'id' => 1,
+            'name' => 'user',
+            'email' => 'user@email.com',
+        ], $attributes);
+
+        return \Backpack\CRUD\Tests\config\Models\User::make($attributes);
     }
 
     // allow us to run crud panel private/protected methods like `inferFieldTypeFromDbColumnType`

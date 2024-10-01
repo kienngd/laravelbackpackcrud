@@ -1,9 +1,10 @@
-@if(isset($saveAction['active']) && !is_null($saveAction['active']['value']))
-    <div id="saveActions" class="form-group my-3">
+<div id="saveActions" class="form-group my-3">
+    @if(isset($saveAction['active']) && !is_null($saveAction['active']['value']))
+    
         <input type="hidden" name="_save_action" value="{{ $saveAction['active']['value'] }}">
 
         @if(empty($saveAction['options']))
-            <button type="submit" class="btn btn-success">
+            <button type="submit" class="btn btn-success text-white">
                 <span class="la la-save" role="presentation" aria-hidden="true"></span> &nbsp;
                 <span data-value="{{ $saveAction['active']['value'] }}">{{ $saveAction['active']['label'] }}</span>
             </button>
@@ -23,16 +24,16 @@
                 </ul>
             </div>
         @endif
+    @endif
+    @if(!$crud->hasOperationSetting('showCancelButton') || $crud->getOperationSetting('showCancelButton') == true)
+        <a href="{{ $crud->hasAccess('list') ? url($crud->route) : url()->previous() }}" class="btn btn-secondary text-decoration-none"><span class="la la-ban"></span> &nbsp;{{ trans('backpack::crud.cancel') }}</a>
+    @endif
 
-        @if(!$crud->hasOperationSetting('showCancelButton') || $crud->getOperationSetting('showCancelButton') == true)
-            <a href="{{ $crud->hasAccess('list') ? url($crud->route) : url()->previous() }}" class="btn btn-secondary text-decoration-none"><span class="la la-ban"></span> &nbsp;{{ trans('backpack::crud.cancel') }}</a>
-        @endif
+    @if ($crud->get('update.showDeleteButton') && $crud->get('delete.configuration') && $crud->hasAccess('delete'))
+        <button onclick="confirmAndDeleteEntry()" type="button" class="btn btn-danger float-right float-end"><i class="la la-trash-alt"></i> {{ trans('backpack::crud.delete') }}</button>
+    @endif
+</div>
 
-        @if ($crud->get('update.showDeleteButton') && $crud->get('delete.configuration') && $crud->hasAccess('delete'))
-            <button onclick="confirmAndDeleteEntry()" type="button" class="btn btn-danger float-right float-end"><i class="la la-trash-alt"></i> {{ trans('backpack::crud.delete') }}</button>
-        @endif
-    </div>
-@endif
 
 @push('after_scripts')
 <script>
@@ -120,7 +121,21 @@
             title: "{!! trans('backpack::base.warning') !!}",
             text: "{!! trans('backpack::crud.delete_confirm') !!}",
             icon: "warning",
-            buttons: ["{!! trans('backpack::crud.cancel') !!}", "{!! trans('backpack::crud.delete') !!}"],
+            buttons: {
+		  	cancel: {
+				text: "{!! trans('backpack::crud.cancel') !!}",
+				value: null,
+				visible: true,
+				className: "bg-secondary",
+				closeModal: true,
+			},
+			delete: {
+				text: "{!! trans('backpack::crud.delete') !!}",
+				value: true,
+				visible: true,
+				className: "bg-danger",
+				},
+			},
             dangerMode: true,
         }).then((value) => {
             if (value) {

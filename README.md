@@ -49,7 +49,7 @@ Among the FREE features of each admin interface:
 - [Reorder](https://backpackforlaravel.com/docs/crud-operation-reorder) operation
 - [Revise](https://backpackforlaravel.com/docs/crud-operation-revisions) operation (aka. audit log)
 
-But professionals don't love Backpack just because it's feature-packed. They also love it because it's **ridiculously easy to override a functionality**. Generally, you just need to create a function (or blade file) with the right name. Yes, it can be _that_ easy.
+But professionals love it not only because it is feature-packed. They also love it because it's **ridiculously easy to override a functionality**. Generally, you just need to create a function (or blade file) with the right name. Yes, it can be _that_ easy.
 
 > Need more complex features? Purchase [Backpack PRO](https://backpackforlaravel.com/pricing), our closed-source paid add-on. It will add **5 more operations, 10 filters, 28 more fields, 6 more columns and 1 more widget**. For more info, see our [FREE vs PRO comparison table](https://backpackforlaravel.com/docs/features-free-vs-paid). We believe it's everything you need to build admin panels of _any_ complexity.
 
@@ -82,7 +82,7 @@ Start with the ["Introduction" page in our docs](https://backpackforlaravel.com/
 ## Install
 
 For the current version (recommended):
-- [Install Backpack v6 on Laravel 10](https://backpackforlaravel.com/docs/installation);
+- [Install Backpack v6 on Laravel 10 & 11](https://backpackforlaravel.com/docs/installation);
 
 For the previous versions (not recommended):
 - [Install Backpack v5 on Laravel 10, 9 or 8](https://backpackforlaravel.com/docs/5.x/installation)  - last feature update was 27th April 2023;
@@ -133,14 +133,12 @@ For tasks & details about how you can help our project, please see [CONTRIBUTING
 - [Cristian Tabacitu](http://tabacitu.ro) - founder & lead maintainer;
 - [Pedro Martins](https://github.com/pxpm) - senior maintainer;
 - [António Almeida](https://github.com/promatik) - senior maintainer;
-- [Mauro Martinez](https://github.com/maurohmartinez) - maintainer & educator;
 - [Karan Datwani](https://github.com/karandatwani92) - maintainer & social media manager;
-- [Jorge Castro](https://github.com/jorgetwgroup) - maintainer;
-- [Mohammad Emran](https://github.com/phpfour) - maintainer;
+- [Jorge Castro](https://github.com/jcastroa87) - maintainer;
 - [290+ wonderful contributors][link-contributors]
 
 Special thanks go to:
-- [Owen Melbourne](https://github.com/OwenMelbz), [Oliver Ziegler](https://github.com/OliverZiegler), [Thomas Swonke](https://github.com/tswonke), [Catalin Tudorache](https://github.com/tumf87), [Abby Janke](https://github.com/AbbyJanke), [David Lloyd](https://github.com/lloy0076) - A LOT of new features, bug fixing, support, feedback and code review;
+- [Mauro Martinez](https://github.com/maurohmartinez), [Owen Melbourne](https://github.com/OwenMelbz), [Oliver Ziegler](https://github.com/OliverZiegler), [Thomas Swonke](https://github.com/tswonke), [Catalin Tudorache](https://github.com/tumf87), [Abby Janke](https://github.com/AbbyJanke), [David Lloyd](https://github.com/lloy0076) - A LOT of new features, bug fixing, support, feedback and code review;
 - [Paweł Kuna](https://github.com/codecalm/) - creator of Tabler;
 - [Łukasz Holeczek](https://github.com/mrholek/) - creator of CoreUI;
 - [Taylor Otwell](https://github.com/taylorotwell) & the wonderful Laravel community (of course);

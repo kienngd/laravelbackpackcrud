@@ -111,7 +111,7 @@ trait Input
             $key = Str::before($this->getOnlyRelationEntity(['entity' => $fieldName]), '.');
 
             // if the field entity contains the attribute we want to add that attribute in the correct relation key.
-            // eg: adress.street, we want to add `street` as an attribute in `address` relation, `street` is not
+            // eg: address.street, we want to add `street` as an attribute in `address` relation, `street` is not
             // a relation of `address`
             if ($this->getOnlyRelationEntity($field) !== $field['entity']) {
                 if (Str::before($field['entity'], '.') === $relationMethod) {
@@ -127,19 +127,26 @@ trait Input
                     // the key used to store the values is the main relation key
                     $key = Str::beforeLast($this->getOnlyRelationEntity($field), '.');
 
+                    if (! isset($field['parentFieldName']) && isset($field['entity'])) {
+                        $mainField = $field;
+                        $mainField['entity'] = Str::beforeLast($field['entity'], '.');
+
+                        $inferredRelation = $this->inferRelationTypeFromRelationship($mainField);
+                    }
+
                     break;
             }
 
             // we don't need to re-setup this relation method values, we just want the relations
             if ($key === $relationMethod) {
+                unset($inferredRelation);
                 continue;
             }
 
             $fieldDetails = Arr::get($relationDetails, $key, []);
-
             $fieldDetails['values'][$attributeName] = Arr::get($input, $fieldName);
             $fieldDetails['model'] = $fieldDetails['model'] ?? $field['model'];
-            $fieldDetails['relation_type'] = $fieldDetails['relation_type'] ?? $field['relation_type'];
+            $fieldDetails['relation_type'] = $fieldDetails['relation_type'] ?? $inferredRelation ?? $field['relation_type'];
             $fieldDetails['crudFields'][] = $field;
             $fieldDetails['entity'] = $this->getOnlyRelationEntity($field);
 
@@ -151,6 +158,7 @@ trait Input
             }
 
             Arr::set($relationDetails, $key, $fieldDetails);
+            unset($inferredRelation);
         }
 
         return $relationDetails;
@@ -194,5 +202,40 @@ trait Input
         return Arr::where($input, function ($item, $key) use ($excludedFields) {
             return ! in_array($key, $excludedFields);
         });
+    }
+
+    /**
+     * Decode attributes that are casted as array/object/json in the model.
+     * So that they are not json_encoded twice before they are stored in the db
+     * (once by Backpack in front-end, once by Laravel Attribute Casting).
+     *
+     * @param  array  $input
+     * @param  mixed  $model
+     * @return array
+     */
+    public function decodeJsonCastedAttributes($input, $model = false)
+    {
+        $model = $model ? $model : $this->model;
+        $fields = $this->getCleanStateFields();
+        $casted_attributes = $model->getCastedAttributes();
+
+        foreach ($fields as $field) {
+            // Test the field is castable
+            if (isset($field['name']) && is_string($field['name']) && array_key_exists($field['name'], $casted_attributes)) {
+                // Handle JSON field types
+                $jsonCastables = ['array', 'object', 'json'];
+                $fieldCasting = $casted_attributes[$field['name']];
+
+                if (in_array($fieldCasting, $jsonCastables) && isset($input[$field['name']]) && ! empty($input[$field['name']]) && ! is_array($input[$field['name']])) {
+                    try {
+                        $input[$field['name']] = json_decode($input[$field['name']]);
+                    } catch (\Exception $e) {
+                        $input[$field['name']] = [];
+                    }
+                }
+            }
+        }
+
+        return $input;
     }
 }
