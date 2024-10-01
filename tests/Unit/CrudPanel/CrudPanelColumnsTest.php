@@ -370,6 +370,43 @@ class CrudPanelColumnsTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseCru
         }
     }
 
+    public function testAddRelationByNameWithMutator()
+    {
+        $this->crudPanel->setModel(User::class);
+        $this->crudPanel->addColumn('accountDetails.nicknamutator');
+        if (backpack_pro()) {
+            $this->assertEquals(['accountDetails__nicknamutator' => [
+                'name' => 'accountDetails.nicknamutator',
+                'label' => 'AccountDetails.nicknamutator',
+                'type' => 'relationship',
+                'key' => 'accountDetails__nicknamutator',
+                'priority' => 0,
+                'attribute' => 'nicknamutator',
+                'tableColumn' => false,
+                'orderable' => false,
+                'searchLogic' => false,
+                'relation_type' => 'HasOne',
+                'entity' => 'accountDetails.nicknamutator',
+                'model' => 'Backpack\CRUD\Tests\Config\Models\AccountDetails',
+            ]], $this->crudPanel->columns());
+        } else {
+            $this->assertEquals(['accountDetails__nicknamutator' => [
+                'name' => 'accountDetails.nicknamutator',
+                'label' => 'AccountDetails.nicknamutator',
+                'type' => 'text',
+                'key' => 'accountDetails__nicknamutator',
+                'priority' => 0,
+                'attribute' => 'nicknamutator',
+                'tableColumn' => false,
+                'orderable' => false,
+                'searchLogic' => false,
+                'relation_type' => 'HasOne',
+                'entity' => 'accountDetails.nicknamutator',
+                'model' => 'Backpack\CRUD\Tests\Config\Models\AccountDetails',
+            ]], $this->crudPanel->columns());
+        }
+    }
+
     public function testAddRelationColumn()
     {
         $this->crudPanel->setModel(User::class);
@@ -398,8 +435,17 @@ class CrudPanelColumnsTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseCru
         $this->crudPanel->beforeColumn('column1');
 
         $keys = array_keys($this->crudPanel->columns());
-        $this->assertEquals($this->expectedTwoColumnsArray['column2'], $this->crudPanel->columns()[$keys[0]]);
+        $expected = $this->expectedTwoColumnsArray['column2'];
+        $expected['priority'] = 0;
+        $this->assertEquals($expected, $this->crudPanel->columns()[$keys[0]]);
         $this->assertEquals(['column2', 'column1'], $keys);
+    }
+
+    public function testItDoesNotChangeThePriorityIfDeveloperDefinedIt()
+    {
+        $this->crudPanel->addColumn('column1');
+        $this->crudPanel->addColumn(['name' => 'column2', 'priority' => 5])->beforeColumn('column1');
+        $this->assertEquals(5, $this->crudPanel->firstColumnWhere('name', 'column2')['priority']);
     }
 
     public function testMoveColumnBeforeUnknownColumnName()
@@ -418,7 +464,9 @@ class CrudPanelColumnsTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseCru
         $this->crudPanel->afterColumn('column1');
 
         $keys = array_keys($this->crudPanel->columns());
-        $this->assertEquals($this->expectedThreeColumnsArray['column3'], $this->crudPanel->columns()[$keys[1]]);
+        $expected = $this->expectedThreeColumnsArray['column3'];
+        $expected['priority'] = 1;
+        $this->assertEquals($expected, $this->crudPanel->columns()[$keys[1]]);
         $this->assertEquals(['column1', 'column3', 'column2'], $keys);
     }
 
@@ -732,6 +780,10 @@ class CrudPanelColumnsTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseCru
         $this->crudPanel->column('test4')->before('test1');
         $crudColumnsNames = array_column($this->crudPanel->columns(), 'name');
         $this->assertEquals($crudColumnsNames, ['test4', 'test1', 'test3', 'test2']);
+
+        $this->crudPanel->column('test5')->afterColumn('test1');
+        $crudColumnsNames = array_column($this->crudPanel->columns(), 'name');
+        $this->assertEquals($crudColumnsNames, ['test4', 'test1', 'test5', 'test3', 'test2']);
     }
 
     public function testItCanRemoveColumnAttributesFluently()
@@ -912,5 +964,22 @@ class CrudPanelColumnsTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseCru
         $this->crudPanel->entry = $this->makeAnArticleModel();
         $url = $columnArray['wrapper']['href']($this->crudPanel, $columnArray, $this->crudPanel->entry, 1);
         $this->assertEquals('http://localhost/admin/articles/1/show?test=testing&test2=Some%20Content', $url);
+    }
+
+    public function testItCanInferFieldAttributesFromADynamicRelation()
+    {
+        User::resolveRelationUsing('dynamicRelation', function ($user) {
+            return $user->belongsTo(\Backpack\CRUD\Tests\config\Models\Bang::class);
+        });
+
+        $this->crudPanel->setModel(User::class);
+        $this->crudPanel->addColumn('dynamicRelation');
+
+        $column = $this->crudPanel->columns()['dynamicRelation'];
+
+        $this->assertEquals('dynamicRelation', $column['name']);
+        $this->assertEquals('name', $column['attribute']);
+        $this->assertEquals('relationship', $column['type']);
+        $this->assertEquals('BelongsTo', $column['relation_type']);
     }
 }

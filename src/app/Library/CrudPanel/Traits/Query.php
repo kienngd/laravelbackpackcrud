@@ -2,6 +2,7 @@
 
 namespace Backpack\CRUD\app\Library\CrudPanel\Traits;
 
+use Illuminate\Contracts\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Builder;
 
 trait Query
@@ -59,6 +60,13 @@ trait Query
         }
         call_user_func_array([$this->query, $function], array_slice(func_get_args(), 1));
         call_user_func_array([$this->totalQuery, $function], array_slice(func_get_args(), 1));
+
+        return $this;
+    }
+
+    public function setQuery(QueryBuilder $query)
+    {
+        $this->query = $query;
 
         return $this;
     }
@@ -178,7 +186,7 @@ trait Query
         $column_direction = strtolower($column_direction);
 
         if ($this->query->getQuery()->joins !== null) {
-            return $this->query->orderByRaw("\"{$this->model->getTableWithPrefix()}\".\"{$column_name}\" {$column_direction}");
+            return $this->query->orderBy("{$this->model->getTableWithPrefix()}.{$column_name}", $column_direction);
         }
 
         return $this->query->orderBy($column_name, $column_direction);
